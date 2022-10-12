@@ -12,7 +12,7 @@ import tf2_geometry_msgs
 from tf.transformations import quaternion_multiply
 import actionlib
 
-from geometry_msgs.msg import PoseStamped, TransformStamped, PointStamped
+from geometry_msgs.msg import PoseStamped, TransformStamped, PointStamped, Twist
 from sensor_msgs.msg import Image, LaserScan
 from nav_msgs.msg import OccupancyGrid
 from nav_msgs.srv import GetPlan
@@ -122,6 +122,8 @@ class HabitatInterfaceROSNode:
         self.last_point = None
         self.has_new_point = threading.Event()
         self.pt_sub = rospy.Subscriber(cfg.RVIZ_POINT_TOPIC, PointStamped, self.on_point)
+
+        self.action_pub = rospy.Publisher(cfg.ACTION_PUB_TOPIC, Twist, queue_size=1)
 
     def on_img(self, color_img_msg, depth_img_msg):
         try:
@@ -431,3 +433,9 @@ class HabitatInterfaceROSNode:
         self.ref_tf.transform.rotation.y = rot.y
         self.ref_tf.transform.rotation.z = rot.z
         self.ref_tf.transform.rotation.w = rot.w
+
+    def move_by_velocities(self, linear, angular):
+        move_cmd = Twist()
+        move_cmd.linear.x = linear
+        move_cmd.angular.z = angular
+        self.action_pub.publish(move_cmd)
