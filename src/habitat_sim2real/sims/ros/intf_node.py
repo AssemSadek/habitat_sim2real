@@ -124,7 +124,9 @@ class HabitatInterfaceROSNode:
         self.pt_sub = rospy.Subscriber(cfg.RVIZ_POINT_TOPIC, PointStamped, self.on_point)
 
         self.action_pub = rospy.Publisher(cfg.ACTION_PUB_TOPIC, Twist, queue_size=1)
-        self.last_twist = None
+        self.last_twist = Twist()
+        self.last_twist.linear.x = 0.0
+        self.last_twist.angular.z = 0.0
 
     def on_img(self, color_img_msg, depth_img_msg):
         try:
