@@ -93,6 +93,7 @@ class HabitatInterfaceROSNode:
         if not self.move_base_client.wait_for_server(timeout):
             raise RuntimeError("Unable to connect to move_base action server.")
 
+        self.dynamixel_cmd_proxy = None
 #        try:
 #            rospy.wait_for_service(cfg.DYNAMIXEL_SERVICE, timeout)
 #            self.dynamixel_cmd_proxy = rospy.ServiceProxy(cfg.DYNAMIXEL_SERVICE,
@@ -105,7 +106,6 @@ class HabitatInterfaceROSNode:
 #        self.dynamixel_sub = rospy.Subscriber(cfg.DYNAMIXEL_STATE_TOPIC,
 #                                              DynamixelStateList,
 #                                              self.on_dynamixel_state)
-        self.dynamixel_cmd_proxy = None
 
         try:
             rospy.wait_for_service(cfg.MOVE_BASE_PLAN_SERVICE, timeout)
@@ -124,6 +124,7 @@ class HabitatInterfaceROSNode:
         self.pt_sub = rospy.Subscriber(cfg.RVIZ_POINT_TOPIC, PointStamped, self.on_point)
 
         self.action_pub = rospy.Publisher(cfg.ACTION_PUB_TOPIC, Twist, queue_size=1)
+        self.last_twist = None
 
     def on_img(self, color_img_msg, depth_img_msg):
         try:
@@ -233,6 +234,7 @@ class HabitatInterfaceROSNode:
     def on_bump(self, bump_msg):
         if bump_msg.state == BumperEvent.PRESSED and self.cancel_move_on_bump:
             self.move_base_client.cancel_goal()
+            self.move_by_velocities(0.0, 0.0)
             with self.collided_lock:
                 self.collided = True
 
@@ -439,3 +441,4 @@ class HabitatInterfaceROSNode:
         move_cmd.linear.x = linear
         move_cmd.angular.z = angular
         self.action_pub.publish(move_cmd)
+        self.last_twist = move_cmd
